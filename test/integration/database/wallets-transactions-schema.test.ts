@@ -20,7 +20,7 @@ async function aWallet(overrides = {}) {
 
 describe('wallets constraints', () => {
   it('accepts a valid wallet', async () => {
-    await aWallet({ balance: '100.00' });
+    await aWallet();
   });
 
   it('refuses a negative balance', async () => {
@@ -49,7 +49,7 @@ describe('wager_transactions constraints', () => {
     insertRow(db, 'wager_transactions', transactionRow(wallet.id, wallet.playerId, overrides));
 
   beforeAll(async () => {
-    wallet = await aWallet({ balance: '100.00' });
+    wallet = await aWallet();
   });
 
   it('accepts a processed BET', async () => {
