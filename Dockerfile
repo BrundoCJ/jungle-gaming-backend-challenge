@@ -9,6 +9,7 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json tsconfig.json bunfig.toml ./
 COPY src ./src
+COPY scripts ./scripts
 USER bun
 EXPOSE 3000
 CMD ["bun", "src/main.ts"]

@@ -8,6 +8,8 @@ x-app: &app
       condition: service_healthy
     sqs-init:
       condition: service_completed_successfully
+    migrate:
+      condition: service_completed_successfully
   healthcheck:
     test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health/live || exit 1"]
     interval: 10s
@@ -72,6 +74,18 @@ services:
         aws sqs create-queue --queue-name wager-transactions.fifo --attributes file:///tmp/attrs.json > /dev/null
         aws sqs create-queue --queue-name wallet-events.fifo --attributes FifoQueue=true > /dev/null
         echo "queues ready"
+
+  # One-shot: applies database migrations before the app instances start.
+  migrate:
+    build: .
+    image: wagering-processor:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    command: ["bun", "scripts/migrate.ts", "up"]
+    restart: "no"
 
   # Three instances of the same service to exercise multi-instance safety.
   app-1:
