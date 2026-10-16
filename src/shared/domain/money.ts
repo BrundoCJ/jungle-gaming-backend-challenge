@@ -42,6 +42,12 @@ export class Money {
     return new Money(minorUnits, props.currency);
   }
 
+  /** Builds a (possibly negative) value from integer minor units, e.g. computed totals. */
+  static fromMinorUnits(minorUnits: bigint, currency: string): Money {
+    Money.assertCurrency(currency);
+    return new Money(minorUnits, currency);
+  }
+
   static zero(currency: string): Money {
     Money.assertCurrency(currency);
     return new Money(0n, currency);

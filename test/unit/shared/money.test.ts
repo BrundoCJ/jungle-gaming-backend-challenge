@@ -65,6 +65,11 @@ describe('Money arithmetic', () => {
     expect(result.isNegative()).toBe(true);
   });
 
+  it('builds values from minor units, including negative totals', () => {
+    expect(Money.fromMinorUnits(2550n, 'BRL').amount).toBe('25.50');
+    expect(Money.fromMinorUnits(-5n, 'BRL').amount).toBe('-0.05');
+  });
+
   it('negates', () => {
     expect(brl('5.10').negate().amount).toBe('-5.10');
     expect(brl('0').negate().isZero()).toBe(true);

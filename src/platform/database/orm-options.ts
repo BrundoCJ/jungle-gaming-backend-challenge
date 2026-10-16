@@ -1,8 +1,7 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig, type Options } from '@mikro-orm/postgresql';
 import { MIGRATIONS } from './migrations';
-
-export const PERSISTENCE_ENTITIES: NonNullable<Options['entities']> = [];
+import { PERSISTENCE_SCHEMAS } from './persistence/schemas';
 
 /**
  * Single source of MikroORM configuration for the app, the migration CLI
@@ -12,7 +11,7 @@ export const PERSISTENCE_ENTITIES: NonNullable<Options['entities']> = [];
 export function createOrmOptions(databaseUrl: string, overrides: Options = {}): Options {
   return defineConfig({
     clientUrl: databaseUrl,
-    entities: PERSISTENCE_ENTITIES,
+    entities: PERSISTENCE_SCHEMAS,
     extensions: [Migrator],
     migrations: {
       migrationsList: MIGRATIONS,

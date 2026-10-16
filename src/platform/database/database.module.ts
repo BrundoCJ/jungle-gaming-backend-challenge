@@ -1,6 +1,8 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Global, Inject, Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { UnitOfWork } from '../../shared/application/unit-of-work';
 import { APP_CONFIG, type AppConfig } from '../config/app-config';
+import { MikroOrmUnitOfWork } from './mikro-orm-unit-of-work';
 import { createOrmOptions } from './orm-options';
 
 @Injectable()
@@ -21,7 +23,8 @@ class OrmLifecycle implements OnApplicationShutdown {
       useFactory: (config: AppConfig) => MikroORM.init(createOrmOptions(config.database.url)),
     },
     OrmLifecycle,
+    { provide: UnitOfWork, useClass: MikroOrmUnitOfWork },
   ],
-  exports: [MikroORM],
+  exports: [MikroORM, UnitOfWork],
 })
 export class DatabaseModule {}

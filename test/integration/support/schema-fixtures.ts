@@ -63,3 +63,16 @@ export async function expectViolation(statement: Promise<unknown>, constraint: s
   expect(error).toBeDefined();
   expect(String((error as Error).message)).toContain(constraint);
 }
+
+/**
+ * Awaits a promise that must reject and returns the error. Used instead of
+ * `expect(promise).rejects`, which can hang under bun test after a driver error.
+ */
+export async function rejectionOf(promise: Promise<unknown>): Promise<Error> {
+  try {
+    await promise;
+  } catch (error) {
+    return error as Error;
+  }
+  throw new Error('expected the promise to reject, but it resolved');
+}
