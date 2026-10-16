@@ -7,6 +7,7 @@ import { CoreModule } from './platform/core.module';
 import { DatabaseModule } from './platform/database/database.module';
 import { HealthModule } from './platform/health/health.module';
 import { LoggingModule } from './platform/logging/logging.module';
+import { MessagingModule } from './platform/messaging/messaging.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LoggingModule } from './platform/logging/logging.module';
     DatabaseModule,
     CoreModule,
     AuthModule,
+    MessagingModule,
     HealthModule,
     WalletModule,
     WageringModule,

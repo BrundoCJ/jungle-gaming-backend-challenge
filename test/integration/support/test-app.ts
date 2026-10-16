@@ -22,6 +22,10 @@ export async function startTestApp(
     NODE_ENV: 'test',
     LOG_LEVEL: 'silent',
     DATABASE_URL: db.url,
+    // Background workers are off unless a test turns them on explicitly.
+    RUN_SQS_CONSUMER: 'false',
+    RUN_OUTBOX_PUBLISHER: 'false',
+    RUN_PENDING_REFERENCE_WORKER: 'false',
     ...env,
   });
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
