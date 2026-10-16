@@ -52,6 +52,15 @@ export class InvalidWagerTransactionError extends DomainError {
   }
 }
 
+/** Inbox/outbox message used out of order (e.g. published twice). Programming error. */
+export class InvalidMessageStateError extends DomainError {
+  readonly code = 'INVALID_MESSAGE_STATE';
+
+  constructor(reason: string) {
+    super(`Invalid message state: ${reason}`);
+  }
+}
+
 /**
  * Attempt to move a transaction out of a terminal state. This is a
  * programming error, never a business path.
