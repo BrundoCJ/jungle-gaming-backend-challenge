@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
 import {
   ConflictError,
@@ -40,6 +40,20 @@ export interface LedgerPageView {
   items: LedgerEntryView[];
   /** Opaque; pass back as ?cursor= to get the next page. Null on the last page. */
   nextCursor: string | null;
+}
+
+export interface ReconciliationView {
+  walletId: string;
+  storedBalance: MoneyProps;
+  calculatedBalance: MoneyProps;
+  difference: MoneyProps;
+  consistent: boolean;
+  checkedEntries: number;
+}
+
+/** Notified on every divergence found (logs/metrics); never used to fix data. */
+export abstract class ReconciliationObserver {
+  abstract mismatch(walletId: string, report: ReconciliationView): void;
 }
 
 export const MAX_LEDGER_PAGE = 200;
@@ -91,7 +105,41 @@ export class WalletService {
     @Inject(UnitOfWork) private readonly uow: UnitOfWork,
     @Inject(Clock) private readonly clock: Clock,
     @Inject(IdGenerator) private readonly ids: IdGenerator,
+    @Optional() @Inject(ReconciliationObserver) private readonly observer?: ReconciliationObserver,
   ) {}
+
+  /**
+   * Compares the materialized balance with the balance rebuilt from the
+   * ledger. The wallet row is locked so no movement can commit in between.
+   * Divergences are logged, counted and reported; never corrected here.
+   */
+  async reconcile(walletId: string): Promise<ReconciliationView> {
+    return this.uow.transaction(async (repos) => {
+      const wallet = await repos.wallets.findById(walletId, { forUpdate: true });
+      if (!wallet) {
+        throw new NotFoundError('WALLET_NOT_FOUND', `wallet ${walletId} not found`);
+      }
+      const summary = await repos.ledger.summarize(wallet.id, wallet.currency);
+      const difference = wallet.balance.subtract(summary.net);
+      const report: ReconciliationView = {
+        walletId: wallet.id,
+        storedBalance: wallet.balance.toJSON(),
+        calculatedBalance: summary.net.toJSON(),
+        difference: difference.toJSON(),
+        consistent: difference.isZero(),
+        checkedEntries: summary.entries,
+      };
+      if (!report.consistent) {
+        this.logger.warn(
+          `reconciliation mismatch for wallet ${wallet.id} (${summary.entries} entries checked)`,
+        );
+        this.observer?.mismatch(wallet.id, report);
+      }
+      return report;
+    });
+  }
+
+  private readonly logger = new Logger(WalletService.name);
 
   /**
    * Opens a wallet. A positive initial balance creates the internal OPENING

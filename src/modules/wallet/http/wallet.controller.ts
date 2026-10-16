@@ -2,7 +2,12 @@ import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@ne
 import { z } from 'zod';
 import { parseOrThrow } from '../../../platform/http/zod-validation';
 import { moneySchema, uuid } from '../../../shared/application/contract-schemas';
-import { type LedgerPageView, WalletService, type WalletView } from '../application/wallet-service';
+import {
+  type LedgerPageView,
+  type ReconciliationView,
+  WalletService,
+  type WalletView,
+} from '../application/wallet-service';
 
 const createWalletSchema = z.object({
   playerId: uuid,
@@ -27,6 +32,12 @@ export class WalletController {
   @Get(':walletId')
   get(@Param('walletId') walletId: string): Promise<WalletView> {
     return this.wallets.get(parseOrThrow(uuid, walletId));
+  }
+
+  @Post(':walletId/reconciliation')
+  @HttpCode(200)
+  reconcile(@Param('walletId') walletId: string): Promise<ReconciliationView> {
+    return this.wallets.reconcile(parseOrThrow(uuid, walletId));
   }
 
   @Get(':walletId/ledger')
