@@ -37,6 +37,16 @@ export class ConflictError extends ApplicationError {
   }
 }
 
+/**
+ * A queue message that can never succeed as sent (e.g. the same messageId
+ * redelivered with a different body). Goes straight to the DLQ.
+ */
+export class PoisonMessageError extends ApplicationError {
+  constructor(code: string, message: string) {
+    super(code, message);
+  }
+}
+
 /** Business rule violation that is not persisted (e.g. unknown wallet). */
 export class UnprocessableError extends ApplicationError {
   constructor(code: string, message: string) {
