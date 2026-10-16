@@ -14,7 +14,9 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "test": "bun test",
-    "test:unit": "bun test ./test/unit"
+    "test:unit": "bun test ./test/unit",
+    "infra:up": "docker compose up -d --wait postgres ministack && docker compose run --rm sqs-init",
+    "infra:down": "docker compose down -v"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

@@ -1,0 +1,102 @@
+name: wagering
+
+x-app: &app
+  build: .
+  image: wagering-processor:local
+  depends_on:
+    postgres:
+      condition: service_healthy
+    sqs-init:
+      condition: service_completed_successfully
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health/live || exit 1"]
+    interval: 10s
+    timeout: 3s
+    retries: 3
+  restart: unless-stopped
+  stop_grace_period: 30s
+
+x-app-env: &app-env
+  NODE_ENV: production
+  PORT: "3000"
+  LOG_LEVEL: info
+  DATABASE_URL: postgres://wagering:wagering@postgres:5432/wagering
+  AWS_REGION: us-east-1
+  AWS_ENDPOINT_URL: http://ministack:4566
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: wagering
+      POSTGRES_PASSWORD: wagering
+      POSTGRES_DB: wagering
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wagering -d wagering"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # SQS emulator. LocalStack's current images require a paid auth token,
+  # so we use MiniStack (open-source, same API and port).
+  ministack:
+    image: ministackorg/ministack:1.5.27
+    ports:
+      - "4566:4566"
+
+  # One-shot: creates the FIFO queues and the DLQ redrive policy.
+  sqs-init:
+    image: amazon/aws-cli:2.38.1
+    depends_on:
+      ministack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://ministack:4566
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        aws sqs create-queue --queue-name wager-transactions-dlq.fifo --attributes FifoQueue=true > /dev/null
+        DLQ_URL=$$(aws sqs get-queue-url --queue-name wager-transactions-dlq.fifo --query QueueUrl --output text)
+        DLQ_ARN=$$(aws sqs get-queue-attributes --queue-url "$$DLQ_URL" --attribute-names QueueArn --query Attributes.QueueArn --output text)
+        printf '{"FifoQueue":"true","VisibilityTimeout":"30","RedrivePolicy":"{\\"deadLetterTargetArn\\":\\"%s\\",\\"maxReceiveCount\\":\\"5\\"}"}' "$$DLQ_ARN" > /tmp/attrs.json
+        aws sqs create-queue --queue-name wager-transactions.fifo --attributes file:///tmp/attrs.json > /dev/null
+        aws sqs create-queue --queue-name wallet-events.fifo --attributes FifoQueue=true > /dev/null
+        echo "queues ready"
+
+  # Three instances of the same service to exercise multi-instance safety.
+  app-1:
+    <<: *app
+    environment:
+      <<: *app-env
+      INSTANCE_ID: app-1
+    ports:
+      - "3001:3000"
+
+  app-2:
+    <<: *app
+    environment:
+      <<: *app-env
+      INSTANCE_ID: app-2
+    ports:
+      - "3002:3000"
+
+  app-3:
+    <<: *app
+    environment:
+      <<: *app-env
+      INSTANCE_ID: app-3
+    ports:
+      - "3003:3000"
+
+volumes:
+  pgdata:
