@@ -26,6 +26,7 @@ import {
   PoisonMessageError,
   UnprocessableError,
 } from '../../../shared/application/errors';
+import { MetricsRecorder } from '../../../shared/application/metrics';
 import { canonicalJson } from '../../../shared/domain/canonical-json';
 import { DomainError } from '../../../shared/domain/domain-error';
 import { ProcessWagerTransactionUseCase } from '../application/process-wager-transaction';
@@ -81,6 +82,7 @@ export class WagerMessageConsumer implements OnApplicationBootstrap, BeforeAppli
     @Inject(QueueDirectory) private readonly queues: QueueDirectory,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Optional() @Inject(ConsumerHooks) private readonly hooks?: ConsumerHooks,
+    @Optional() @Inject(MetricsRecorder) private readonly metrics?: MetricsRecorder,
   ) {}
 
   setRetryBackoff(backoff: RetryBackoff): void {
@@ -219,6 +221,7 @@ export class WagerMessageConsumer implements OnApplicationBootstrap, BeforeAppli
       `transient failure (receive ${receiveCount}), retrying in ${delay}s: ${String(error)}`,
     );
     this.hooks?.disposition?.('retry', 'transient');
+    this.metrics?.messageDisposition('retry', 'transient');
     await this.changeVisibility(queueUrl, message, delay);
   }
 
@@ -242,6 +245,7 @@ export class WagerMessageConsumer implements OnApplicationBootstrap, BeforeAppli
       new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }),
     );
     this.hooks?.disposition?.('acked', reason);
+    this.metrics?.messageDisposition('acked', reason);
   }
 
   private async deadLetter(queueUrl: string, message: Message, reason: string): Promise<void> {
@@ -259,6 +263,7 @@ export class WagerMessageConsumer implements OnApplicationBootstrap, BeforeAppli
       new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: message.ReceiptHandle }),
     );
     this.hooks?.disposition?.('dead-lettered', reason);
+    this.metrics?.messageDisposition('dead-lettered', reason);
   }
 
   private async changeVisibility(

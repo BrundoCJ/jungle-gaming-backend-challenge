@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { bindLogContext } from '../../../platform/logging/log-context';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
 import {
@@ -6,6 +6,7 @@ import {
   PoisonMessageError,
   UnprocessableError,
 } from '../../../shared/application/errors';
+import { MetricsRecorder } from '../../../shared/application/metrics';
 import { type Repositories, UnitOfWork } from '../../../shared/application/unit-of-work';
 import { Money } from '../../../shared/domain/money';
 import { InboxMessage } from '../../messaging/domain/inbox-message';
@@ -47,9 +48,35 @@ export class ProcessWagerTransactionUseCase {
     @Inject(UnitOfWork) private readonly uow: UnitOfWork,
     @Inject(Clock) private readonly clock: Clock,
     @Inject(IdGenerator) private readonly ids: IdGenerator,
+    @Optional() @Inject(MetricsRecorder) private readonly metrics?: MetricsRecorder,
   ) {}
 
   async execute(command: ProcessWagerCommand): Promise<WagerOutcome> {
+    const channel = command.source.channel;
+    const started = performance.now();
+    let inboxHit = false;
+    try {
+      const outcome = await this.process(command, () => {
+        inboxHit = true;
+      });
+      const status = outcome.transaction.status;
+      if (outcome.idempotentReplay) {
+        this.metrics?.duplicateDetected(channel, inboxHit ? 'inbox' : 'idempotency-key');
+      } else {
+        this.metrics?.transactionSettled(outcome.transaction.kind, status, channel);
+      }
+      this.metrics?.processingDuration(channel, status, (performance.now() - started) / 1000);
+      return outcome;
+    } catch (error) {
+      this.metrics?.processingDuration(channel, 'error', (performance.now() - started) / 1000);
+      throw error;
+    }
+  }
+
+  private async process(
+    command: ProcessWagerCommand,
+    onInboxHit: () => void,
+  ): Promise<WagerOutcome> {
     const { payload, idempotencyKey, source } = command;
     const payloadHash = wagerPayloadHash(payload);
     const money = Money.from(payload.money);
@@ -63,6 +90,9 @@ export class ProcessWagerTransactionUseCase {
             'MESSAGE_ID_REUSED',
             'messageId redelivered with a different body',
           );
+        }
+        if (seen) {
+          onInboxHit();
         }
       }
 

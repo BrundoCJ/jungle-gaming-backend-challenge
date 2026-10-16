@@ -1,5 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Clock } from '../../../shared/application/clock';
+import { MetricsRecorder } from '../../../shared/application/metrics';
 import { UnitOfWork } from '../../../shared/application/unit-of-work';
 import { EventPublisher } from './event-publisher';
 
@@ -27,6 +28,7 @@ export class OutboxPublisher {
     @Inject(UnitOfWork) private readonly uow: UnitOfWork,
     @Inject(EventPublisher) private readonly publisher: EventPublisher,
     @Inject(Clock) private readonly clock: Clock,
+    @Optional() @Inject(MetricsRecorder) private readonly metrics?: MetricsRecorder,
   ) {}
 
   publishPending(limit = OUTBOX_BATCH_SIZE): Promise<PublishReport> {
@@ -48,6 +50,12 @@ export class OutboxPublisher {
         }
         await repos.outbox.save(message);
       }
+
+      const oldest = await repos.outbox.oldestPendingOccurredAt();
+      this.metrics?.outboxLag(
+        oldest ? Math.max(0, (this.clock.now().getTime() - oldest.getTime()) / 1000) : 0,
+      );
+      this.metrics?.outboxPublished(report.published, report.failed);
       return report;
     });
   }

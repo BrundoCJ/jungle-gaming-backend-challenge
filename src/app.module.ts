@@ -8,11 +8,13 @@ import { DatabaseModule } from './platform/database/database.module';
 import { HealthModule } from './platform/health/health.module';
 import { LoggingModule } from './platform/logging/logging.module';
 import { MessagingModule } from './platform/messaging/messaging.module';
+import { ObservabilityModule } from './platform/observability/observability.module';
 
 @Module({
   imports: [
     ConfigModule,
     LoggingModule,
+    ObservabilityModule,
     DatabaseModule,
     CoreModule,
     AuthModule,

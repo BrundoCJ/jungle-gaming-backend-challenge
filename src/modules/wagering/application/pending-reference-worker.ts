@@ -4,11 +4,13 @@ import {
   Injectable,
   Logger,
   type OnApplicationBootstrap,
+  Optional,
 } from '@nestjs/common';
 import { APP_CONFIG, type AppConfig } from '../../../platform/config/app-config';
 import { runWithLogContext } from '../../../platform/logging/log-context';
 import { PollingLoop } from '../../../platform/workers/polling-loop';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
+import { MetricsRecorder } from '../../../shared/application/metrics';
 import { UnitOfWork } from '../../../shared/application/unit-of-work';
 import { WagerTransactionStatus } from '../domain/wager-transaction';
 import { settleAndPersist } from './wager-settlement-writer';
@@ -31,6 +33,7 @@ export class PendingReferenceWorker implements OnApplicationBootstrap, BeforeApp
     @Inject(Clock) private readonly clock: Clock,
     @Inject(IdGenerator) private readonly ids: IdGenerator,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Optional() @Inject(MetricsRecorder) private readonly metrics?: MetricsRecorder,
   ) {
     this.loop = new PollingLoop(
       PendingReferenceWorker.name,
@@ -74,6 +77,9 @@ export class PendingReferenceWorker implements OnApplicationBootstrap, BeforeApp
               at: now,
             });
             this.logger.log(`pending reference ${candidate.id}: ${decision.type}`);
+            if (transaction.isTerminal()) {
+              this.metrics?.transactionSettled(transaction.kind, transaction.status, 'worker');
+            }
           }),
       ).catch((error: unknown) => {
         this.logger.warn(`pending reference ${candidate.id} failed: ${String(error)}`);
