@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { bindLogContext } from '../../../platform/logging/log-context';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
 import {
@@ -44,6 +44,8 @@ export interface WagerOutcome {
  */
 @Injectable()
 export class ProcessWagerTransactionUseCase {
+  private readonly logger = new Logger(ProcessWagerTransactionUseCase.name);
+
   constructor(
     @Inject(UnitOfWork) private readonly uow: UnitOfWork,
     @Inject(Clock) private readonly clock: Clock,
@@ -66,6 +68,10 @@ export class ProcessWagerTransactionUseCase {
         this.metrics?.transactionSettled(outcome.transaction.kind, status, channel);
       }
       this.metrics?.processingDuration(channel, status, (performance.now() - started) / 1000);
+      // Ids (correlation, message, transaction, wallet, provider) come from the log context.
+      this.logger.log(
+        `${outcome.transaction.kind} ${status}${outcome.transaction.failureCode ? ` ${outcome.transaction.failureCode}` : ''}${outcome.idempotentReplay ? ' (replay)' : ''} via ${channel}`,
+      );
       return outcome;
     } catch (error) {
       this.metrics?.processingDuration(channel, 'error', (performance.now() - started) / 1000);
