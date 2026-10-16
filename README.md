@@ -4,6 +4,6 @@ Serviço financeiro distribuído que processa transações de apostas (`BET`, `W
 
 Solução para o [Jungle Gaming Backend Challenge](https://github.com/junglegaming/backend-challenge).
 
-**Stack:** Bun · TypeScript (strict) · NestJS · PostgreSQL · MikroORM · AWS SQS (LocalStack) · Docker Compose
+**Stack:** Bun · TypeScript (strict) · NestJS · PostgreSQL · MikroORM · AWS SQS (MiniStack) · Docker Compose
 
 > Em desenvolvimento. Setup, comandos e decisões de arquitetura serão documentados aqui e em `ARCHITECTURE.md`.
