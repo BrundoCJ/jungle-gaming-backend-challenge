@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { AppLogger } from '../../../src/platform/logging/app-logger';
-import { bindLogContext, runWithLogContext } from '../../../src/platform/logging/log-context';
 import { createRootLogger } from '../../../src/platform/logging/root-logger';
+import { bindLogContext, runWithLogContext } from '../../../src/shared/application/log-context';
 
 function captureLogger() {
   const lines: Record<string, unknown>[] = [];

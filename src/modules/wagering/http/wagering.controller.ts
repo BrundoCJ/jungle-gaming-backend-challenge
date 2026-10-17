@@ -5,6 +5,7 @@ import { identifier, uuid } from '../../../shared/application/contract-schemas';
 import { InvalidRequestError, NotFoundError } from '../../../shared/application/errors';
 import { UnitOfWork } from '../../../shared/application/unit-of-work';
 import { ProcessWagerTransactionUseCase } from '../application/process-wager-transaction';
+import { idempotencyKeySchema, wagerRequestSchema } from '../application/wager-request.schema';
 import {
   httpStatusFor,
   toResultView,
@@ -13,7 +14,6 @@ import {
   type WagerTransactionView,
 } from '../application/wager-views';
 import type { WagerTransaction } from '../domain/wager-transaction';
-import { idempotencyKeySchema, wagerRequestSchema } from './wager-request.schema';
 
 @Controller()
 export class WageringController {

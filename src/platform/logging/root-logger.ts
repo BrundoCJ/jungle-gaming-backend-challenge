@@ -1,6 +1,6 @@
 import pino, { type DestinationStream, type Logger } from 'pino';
+import { currentLogContext } from '../../shared/application/log-context';
 import type { AppConfig } from '../config/app-config';
-import { currentLogContext } from './log-context';
 
 export const ROOT_LOGGER = Symbol('ROOT_LOGGER');
 

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { runWithLogContext } from './log-context';
+import { runWithLogContext } from '../../shared/application/log-context';
 
 export const CORRELATION_HEADER = 'x-correlation-id';
 

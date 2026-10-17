@@ -17,7 +17,6 @@ import {
 } from '@nestjs/common';
 import { z } from 'zod';
 import { APP_CONFIG, type AppConfig } from '../../../platform/config/app-config';
-import { runWithLogContext } from '../../../platform/logging/log-context';
 import { QueueDirectory } from '../../../platform/messaging/sqs';
 import { identifier } from '../../../shared/application/contract-schemas';
 import {
@@ -26,11 +25,12 @@ import {
   PoisonMessageError,
   UnprocessableError,
 } from '../../../shared/application/errors';
+import { runWithLogContext } from '../../../shared/application/log-context';
 import { MetricsRecorder } from '../../../shared/application/metrics';
 import { canonicalJson } from '../../../shared/domain/canonical-json';
 import { DomainError } from '../../../shared/domain/domain-error';
 import { ProcessWagerTransactionUseCase } from '../application/process-wager-transaction';
-import { idempotencyKeySchema, wagerRequestSchema } from '../http/wager-request.schema';
+import { idempotencyKeySchema, wagerRequestSchema } from '../application/wager-request.schema';
 
 export const WAGER_CONSUMER_NAME = 'wager-transactions-consumer';
 

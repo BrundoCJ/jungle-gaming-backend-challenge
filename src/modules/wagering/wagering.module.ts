@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { PendingReferenceWorker } from './application/pending-reference-worker';
 import { ProcessWagerTransactionUseCase } from './application/process-wager-transaction';
 import { WageringController } from './http/wagering.controller';
 import { WagerMessageConsumer } from './messaging/wager-message-consumer';
+import { PendingReferenceWorker } from './workers/pending-reference-worker';
 
 @Module({
   controllers: [WageringController],

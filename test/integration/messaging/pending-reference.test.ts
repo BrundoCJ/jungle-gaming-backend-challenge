@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
-import { PendingReferenceWorker } from '../../../src/modules/wagering/application/pending-reference-worker';
+import { PendingReferenceWorker } from '../../../src/modules/wagering/workers/pending-reference-worker';
 import { assertLedgerInvariant } from '../support/invariants';
 import { apiClient, startTestApp, type TestApp } from '../support/test-app';
 import { createTestDatabase, sql, type TestDatabase } from '../support/test-database';

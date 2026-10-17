@@ -1,6 +1,6 @@
-import { currentLogContext } from '../../platform/logging/log-context';
 import type { EventContext } from '../domain/integration-event';
 import type { IdGenerator } from './clock';
+import { currentLogContext } from './log-context';
 
 /**
  * Builds the identifiers for an integration event raised now. The

@@ -7,13 +7,13 @@ import {
   Optional,
 } from '@nestjs/common';
 import { APP_CONFIG, type AppConfig } from '../../../platform/config/app-config';
-import { runWithLogContext } from '../../../platform/logging/log-context';
 import { PollingLoop } from '../../../platform/workers/polling-loop';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
+import { runWithLogContext } from '../../../shared/application/log-context';
 import { MetricsRecorder } from '../../../shared/application/metrics';
 import { UnitOfWork } from '../../../shared/application/unit-of-work';
+import { settleAndPersist } from '../application/wager-settlement-writer';
 import { WagerTransactionStatus } from '../domain/wager-transaction';
-import { settleAndPersist } from './wager-settlement-writer';
 
 export const PENDING_REFERENCE_BATCH = 50;
 

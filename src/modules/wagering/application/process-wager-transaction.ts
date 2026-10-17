@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { bindLogContext } from '../../../platform/logging/log-context';
 import { Clock, IdGenerator } from '../../../shared/application/clock';
 import {
   ConflictError,
   PoisonMessageError,
   UnprocessableError,
 } from '../../../shared/application/errors';
+import { bindLogContext } from '../../../shared/application/log-context';
 import { MetricsRecorder } from '../../../shared/application/metrics';
 import { type Repositories, UnitOfWork } from '../../../shared/application/unit-of-work';
 import { Money } from '../../../shared/domain/money';
