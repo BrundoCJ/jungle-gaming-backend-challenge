@@ -20,7 +20,3 @@ logs/
 Thumbs.db
 .idea/
 .vscode/
-
-# local tooling
-CLAUDE.md
-.claude/

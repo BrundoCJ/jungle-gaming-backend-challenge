@@ -56,8 +56,8 @@ make up            # ou: docker compose up -d --build --wait
 |---|---|---|
 | `postgres` | PostgreSQL 17 | 5432 |
 | `ministack` | emulador de SQS (API compatível com AWS) | 4566 |
-| `sqs-init` | cria `wager-transactions.fifo`, `wager-transactions-dlq.fifo` (redrive com `maxReceiveCount = 5`) e `wallet-events.fifo` | — |
-| `migrate` | aplica as migrations e termina | — |
+| `sqs-init` | cria `wager-transactions.fifo`, `wager-transactions-dlq.fifo` (redrive com `maxReceiveCount = 5`) e `wallet-events.fifo` | - |
+| `migrate` | aplica as migrations e termina | - |
 | `app-1`, `app-2`, `app-3` | três instâncias da aplicação, cada uma com HTTP, consumer SQS, publisher da outbox e worker de referências pendentes | 3001, 3002, 3003 |
 
 > O LocalStack não é usado porque as imagens atuais exigem token pago. O MiniStack expõe a mesma API na mesma porta (ver ARCHITECTURE.md §16).
@@ -124,7 +124,7 @@ make test-all      # check + test + test-manual
 | Suíte | Testes | Infraestrutura |
 |---|---|---|
 | unidade | 154 | nenhuma (domínio puro) |
-| integração | 90 | PostgreSQL + MiniStack reais |
+| integração | 93 | PostgreSQL + MiniStack reais |
 | concorrência | 5 | PostgreSQL + MiniStack reais, até 3 processos da aplicação |
 | manuais (end-to-end) | 49 verificações | stack completo do Docker Compose (3 instâncias) |
 
@@ -160,7 +160,7 @@ Status de `POST /wagering/transactions`:
 
 | Status | Significado | O provedor deve |
 |---|---|---|
-| `201` | transação aplicada | — |
+| `201` | transação aplicada | - |
 | `202` | aguardando a transação referenciada (`PENDING_REFERENCE`) | aguardar o evento |
 | `422` | rejeitada por regra de negócio, com `failureCode` | não reenviar igual |
 | `400` | payload inválido ou sem `Idempotency-Key` | corrigir a requisição |
@@ -245,7 +245,7 @@ Todas as variáveis são validadas na inicialização (Zod); os padrões servem 
 | `INSTANCE_ID` | hostname | identifica a instância nos logs |
 | `LOG_LEVEL` | `info` | `fatal` … `trace`, `silent` |
 | `DATABASE_URL` | `postgres://wagering:wagering@localhost:5432/wagering` | PostgreSQL |
-| `AWS_REGION` / `AWS_ENDPOINT_URL` | `us-east-1` / — | região e endpoint do SQS (emulador em dev) |
+| `AWS_REGION` / `AWS_ENDPOINT_URL` | `us-east-1` / (vazio) | região e endpoint do SQS (emulador em dev) |
 | `SQS_WAGER_QUEUE_NAME` / `SQS_WAGER_DLQ_NAME` / `SQS_EVENTS_QUEUE_NAME` | `wager-transactions.fifo` / `wager-transactions-dlq.fifo` / `wallet-events.fifo` | filas |
 | `SQS_WAIT_TIME_SECONDS` / `SQS_VISIBILITY_TIMEOUT_SECONDS` | `20` / `30` | long polling e visibilidade |
 | `RUN_SQS_CONSUMER` / `RUN_OUTBOX_PUBLISHER` / `RUN_PENDING_REFERENCE_WORKER` | `true` | liga/desliga cada worker da instância |

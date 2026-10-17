@@ -61,7 +61,7 @@ const submit = (payload: Body, key = `${payload.providerId}:${payload.externalTr
 const balanceOf = async (wallet: Wallet) =>
   ((await api.get(`/wallets/${wallet.id}`)).body.balance as { amount: string }).amount;
 
-describe('POST /wagering/transactions — idempotency', () => {
+describe('POST /wagering/transactions: idempotency', () => {
   it('processes a BET and replays the identical response', async () => {
     const wallet = await openWallet('1000.00');
     const bet = request(wallet, 'BET', '25.00');
@@ -141,7 +141,7 @@ describe('POST /wagering/transactions — idempotency', () => {
   });
 });
 
-describe('POST /wagering/transactions — validation', () => {
+describe('POST /wagering/transactions: validation', () => {
   it.each([
     ['OPENING kind', { kind: 'OPENING' }],
     ['scientific notation', { money: { amount: '1e2', currency: 'BRL' } }],

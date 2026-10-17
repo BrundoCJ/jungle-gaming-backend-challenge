@@ -55,7 +55,7 @@ make test          # ou: bun run infra:up && bun run test:unit && bun run test:i
 | Suíte | Testes | Onde | Cobre |
 |---|---|---|---|
 | unidade | 154 | `test/unit` | `Money` (escala, entradas inválidas, sem arredondamento), `Wallet`, `WalletLedgerEntry`, máquina de estados da `WagerTransaction`, todas as regras de BET/WIN/LOSS/REFUND/ROLLBACK, conflito de moeda, hash canônico e payload divergente, eventos, inbox e outbox, config e logs |
-| integração | 90 | `test/integration` | migrations `up → down → up` e cada constraint/trigger; unit of work (atomicidade, rollback, lock timeout, guarda de versão); toda a API HTTP; idempotência e replay; 50 apostas idênticas em paralelo; corrida da seção 8; reconciliação; consumer SQS (redelivery, HTTP+SQS, crash entre commit e ack, DLQ, shutdown); dois publishers na mesma outbox; worker de referências pendentes; health e métricas |
+| integração | 93 | `test/integration` | migrations `up → down → up` e cada constraint/trigger; unit of work (atomicidade, rollback, lock timeout, guarda de versão); toda a API HTTP; idempotência e replay; 50 apostas idênticas em paralelo; corrida da seção 8; reconciliação; consumer SQS (redelivery, HTTP+SQS, crash entre commit e ack, DLQ, shutdown); dois publishers na mesma outbox; worker de referências pendentes; health e métricas |
 | concorrência | 5 | `test/concurrency` | 60 apostas numa wallet quente; wallets em paralelo; ausência de lock global; **3 processos** da aplicação recebendo cada aposta 2× por HTTP e 2× pelo SQS, com `kill -9` e reinício de uma instância |
 
 Detalhes que garantem testes confiáveis:
