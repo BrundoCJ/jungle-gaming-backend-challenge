@@ -155,7 +155,7 @@ describe('MikroOrmUnitOfWork', () => {
     const bet = await uow.transaction((repos) => applyBet(repos, wallet.id, '25.00'));
 
     const stored = await uow.read((repos) =>
-      repos.transactions.findByIdempotencyKey(bet.idempotencyKey),
+      repos.transactions.findByIdempotencyKey(bet.providerId, bet.idempotencyKey),
     );
     expect(stored?.status).toBe(WagerTransactionStatus.Processed);
     expect(stored?.observedBalance?.amount).toBe('75.00');

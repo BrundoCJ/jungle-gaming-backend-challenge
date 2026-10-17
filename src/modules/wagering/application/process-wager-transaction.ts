@@ -104,7 +104,10 @@ export class ProcessWagerTransactionUseCase {
 
       const wallet = await repos.wallets.findById(payload.walletId, { forUpdate: true });
 
-      const existing = await repos.transactions.findByIdempotencyKey(idempotencyKey);
+      const existing = await repos.transactions.findByIdempotencyKey(
+        payload.providerId,
+        idempotencyKey,
+      );
       if (existing) {
         if (!existing.matchesPayload(payloadHash)) {
           throw new ConflictError(

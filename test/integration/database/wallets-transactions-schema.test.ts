@@ -56,12 +56,13 @@ describe('wager_transactions constraints', () => {
     await insertTx();
   });
 
-  it('enforces unique idempotency keys', async () => {
+  it('enforces unique idempotency keys per provider', async () => {
     await insertTx({ idempotency_key: 'dup-key' });
     await expectViolation(
       insertTx({ idempotency_key: 'dup-key' }),
-      'wager_transactions_idempotency_key_unique',
+      'wager_transactions_provider_idempotency_key_unique',
     );
+    await insertTx({ idempotency_key: 'dup-key', provider_id: 'provider-b' });
   });
 
   it('enforces unique (provider_id, external_transaction_id)', async () => {

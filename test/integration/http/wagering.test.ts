@@ -105,6 +105,21 @@ describe('POST /wagering/transactions — idempotency', () => {
     expect(replay.body.idempotentReplay).toBe(true);
   });
 
+  it('scopes idempotency keys per provider', async () => {
+    const wallet = await openWallet('100.00');
+    const sharedKey = `key-${randomUUID()}`;
+
+    const fromA = await submit(request(wallet, 'BET', '10.00'), sharedKey);
+    const fromB = await submit(
+      request(wallet, 'BET', '10.00', { providerId: 'provider-b' }),
+      sharedKey,
+    );
+
+    expect([fromA.status, fromB.status]).toEqual([201, 201]);
+    expect(fromB.body.idempotentReplay).toBe(false);
+    expect(await balanceOf(wallet)).toBe('80.00');
+  });
+
   it('requires the Idempotency-Key header', async () => {
     const wallet = await openWallet('100.00');
     const response = await api.post('/wagering/transactions', request(wallet, 'BET', '1.00'));

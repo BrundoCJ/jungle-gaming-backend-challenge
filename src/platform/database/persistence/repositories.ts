@@ -132,8 +132,15 @@ class MikroOrmWagerTransactionRepository implements WagerTransactionRepository {
     return record ? toTransaction(record) : null;
   }
 
-  async findByIdempotencyKey(idempotencyKey: string): Promise<WagerTransaction | null> {
-    const record = await this.em.findOne(WagerTransactionSchema, { idempotencyKey }, FRESH);
+  async findByIdempotencyKey(
+    providerId: string,
+    idempotencyKey: string,
+  ): Promise<WagerTransaction | null> {
+    const record = await this.em.findOne(
+      WagerTransactionSchema,
+      { providerId, idempotencyKey },
+      FRESH,
+    );
     return record ? toTransaction(record) : null;
   }
 

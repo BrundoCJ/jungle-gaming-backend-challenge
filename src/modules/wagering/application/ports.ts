@@ -7,7 +7,11 @@ export interface PendingReferenceCandidate {
 
 export interface WagerTransactionRepository {
   findById(id: string): Promise<WagerTransaction | null>;
-  findByIdempotencyKey(idempotencyKey: string): Promise<WagerTransaction | null>;
+  /** Idempotency keys are unique per provider. */
+  findByIdempotencyKey(
+    providerId: string,
+    idempotencyKey: string,
+  ): Promise<WagerTransaction | null>;
   findByExternalId(
     providerId: string,
     externalTransactionId: string,

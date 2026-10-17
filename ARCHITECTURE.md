@@ -94,7 +94,7 @@ A referência é resolvida por `(providerId, referenceExternalTransactionId)` e 
 |---|---|
 | uma wallet por player + moeda | `UNIQUE (player_id, currency)` |
 | saldo nunca negativo | `CHECK (balance >= 0)` em `wallets` e nos saldos do ledger |
-| idempotência persistente | `UNIQUE (idempotency_key)` e `UNIQUE (provider_id, external_transaction_id)` |
+| idempotência persistente | `UNIQUE (provider_id, idempotency_key)` e `UNIQUE (provider_id, external_transaction_id)` |
 | REFUND/ROLLBACK têm referência; BET/OPENING não | `CHECK`s por `kind` |
 | `failure_code` existe só em REJECTED/FAILED; terminais têm `processed_at`; PROCESSED guarda o saldo observado | `CHECK`s cruzando `status` e colunas |
 | uma transação é revertida no máximo uma vez | índice único parcial `(reference_transaction_id) WHERE status = 'PROCESSED' AND kind IN ('REFUND','ROLLBACK')` |
@@ -122,7 +122,7 @@ Mesmo um bug na aplicação não consegue gravar saldo negativo, débito duplica
 
 ## 6. Idempotência
 
-- **Fonte da verdade:** o header `Idempotency-Key` no HTTP, ou `data.idempotencyKey` no SQS. O padrão recomendado é `{providerId}:{externalTransactionId}`.
+- **Fonte da verdade:** o header `Idempotency-Key` no HTTP, ou `data.idempotencyKey` no SQS. O padrão recomendado é `{providerId}:{externalTransactionId}`. A key é única **por provedor** (`UNIQUE (provider_id, idempotency_key)`), já que cada provedor escolhe as suas.
 - **`payloadHash = hex(sha256(canonicalJson(campos de negócio)))`**, onde:
   - os campos são `providerId`, `externalTransactionId`, `playerId`, `walletId`, `roundId`, `gameId`, `kind`, `money` (com o valor normalizado para 2 casas) e `referenceExternalTransactionId`, se presente;
   - o JSON canônico ordena as chaves recursivamente (ordem de code unit UTF-16), descarta `undefined` e não tem espaços;
