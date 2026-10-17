@@ -15,6 +15,15 @@ Solução para o [Jungle Gaming Backend Challenge](https://github.com/junglegami
 | Orquestração | Docker Compose |
 | Observabilidade | logs JSON (pino), métricas Prometheus, health checks |
 
+## Início rápido
+
+```bash
+make setup         # verifica pré-requisitos, instala dependências e sobe o stack (3 instâncias)
+make test-all      # lint + testes automatizados + testes manuais end-to-end
+```
+
+Ou, em um passo só, do zero: `make verify`. `make help` lista todos os comandos, e **[docs/TESTING.md](docs/TESTING.md)** explica cada teste e como rodar sem `make`.
+
 ## O que o sistema garante
 
 | Garantia | Como |
@@ -40,7 +49,7 @@ lock da wallet → idempotência (key + hash) → regras de domínio
 Pré-requisito: Docker com Compose v2.
 
 ```bash
-docker compose up --build
+make up            # ou: docker compose up -d --build --wait
 ```
 
 | Serviço | O que faz | Porta |
@@ -55,7 +64,7 @@ docker compose up --build
 
 ## Verificação rápida
 
-Com o stack de pé (requer `curl` e `jq`), o roteiro abaixo cria uma wallet com 100.00. Em seguida dispara **duas apostas de 80.00 ao mesmo tempo em instâncias diferentes** (cenário obrigatório da seção 8) e repete uma delas numa terceira instância.
+`make test-manual` roda todos os cenários de ponta a ponta e confere cada resposta automaticamente (ver [docs/TESTING.md](docs/TESTING.md#testes-manuais-end-to-end)). Para ver o essencial na mão, com o stack de pé (requer `curl` e `jq`), o roteiro abaixo cria uma wallet com 100.00. Em seguida dispara **duas apostas de 80.00 ao mesmo tempo em instâncias diferentes** (cenário obrigatório da seção 8) e repete uma delas numa terceira instância.
 
 ```bash
 PLAYER=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || printf '%04x%04x-%04x-4%03x-a%03x-%04x%04x%04x' \
@@ -89,6 +98,8 @@ bun run dev                   # app em http://localhost:3000 (com hot reload)
 
 ### Comandos
 
+Os alvos `make` (`make help`) cobrem o dia a dia; por baixo, são estes scripts:
+
 | Comando | Descrição |
 |---|---|
 | `bun run start` / `bun run dev` | inicia a aplicação (dev com watch) |
@@ -102,9 +113,12 @@ bun run dev                   # app em http://localhost:3000 (com hot reload)
 
 ## Testes
 
+Guia completo: **[docs/TESTING.md](docs/TESTING.md)**.
+
 ```bash
-bun run infra:up
-bun run test:unit && bun run test:integration && bun run test:concurrency
+make test          # automatizados: unidade + integração + concorrência (sobe a infra se preciso)
+make test-manual   # end-to-end contra o stack rodando (make up)
+make test-all      # check + test + test-manual
 ```
 
 | Suíte | Testes | Infraestrutura |
@@ -112,6 +126,7 @@ bun run test:unit && bun run test:integration && bun run test:concurrency
 | unidade | 154 | nenhuma (domínio puro) |
 | integração | 90 | PostgreSQL + MiniStack reais |
 | concorrência | 5 | PostgreSQL + MiniStack reais, até 3 processos da aplicação |
+| manuais (end-to-end) | 49 verificações | stack completo do Docker Compose (3 instâncias) |
 
 Não há mocks de banco ou de fila. Cada arquivo de teste cria um **banco isolado** (e filas próprias quando usa SQS), então os testes não dependem de ordem nem de estado anterior. Cobertura dos cenários obrigatórios:
 
@@ -250,6 +265,11 @@ test/
   unit/                   domínio puro
   integration/            HTTP, banco, SQS e workers contra infraestrutura real
   concurrency/            corridas e múltiplos processos
+scripts/
+  migrate.ts              CLI de migrations (up/down/status)
+  manual-tests.sh         cenários end-to-end autoverificáveis contra o stack
+docs/TESTING.md           como testar tudo (automatizado e manual)
+Makefile                  atalhos: setup, up, test, test-manual, verify
 ```
 
 ## Solução de problemas
