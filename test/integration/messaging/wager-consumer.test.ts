@@ -178,6 +178,49 @@ describe('wager message consumer', () => {
     expect(await balanceOf(wallet)).toBe('75.00');
   });
 
+  it('treats a resend with a new occurredAt as the same message, not a poison message', async () => {
+    const wallet = await openWallet();
+    const message = envelope(wallet);
+    await send(message, wallet.id);
+    await consumer.pollOnce();
+
+    await send({ ...message, occurredAt: new Date(Date.now() + 60_000).toISOString() }, wallet.id);
+    await consumer.pollOnce();
+
+    expect(await countLedgerEntries(db, wallet.id, 'DEBIT')).toBe(1);
+    expect(await drainQueue(queues.client, queues.dlqUrl)).toHaveLength(0);
+  });
+
+  it('applies only one of two concurrent bodies sharing a messageId', async () => {
+    const [first, second] = [await openWallet(), await openWallet()];
+    const messageId = `msg-${randomUUID()}`;
+    const useCase = app.app.get(ProcessWagerTransactionUseCase);
+    const execute = (wallet: Wallet) => {
+      const { data } = envelope(wallet, {}, messageId);
+      const { idempotencyKey, ...payload } = data;
+      return useCase.execute({
+        payload: payload as never,
+        idempotencyKey,
+        source: {
+          channel: 'sqs',
+          consumerName: 'race-test',
+          messageId,
+          messageHash: data.walletId,
+        },
+      });
+    };
+
+    const results = await Promise.allSettled([execute(first), execute(second)]);
+
+    expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected']);
+    const rejected = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+    expect((rejected.reason as { code: string }).code).toBe('MESSAGE_ID_REUSED');
+    const debits =
+      (await countLedgerEntries(db, first.id, 'DEBIT')) +
+      (await countLedgerEntries(db, second.id, 'DEBIT'));
+    expect(debits).toBe(1);
+  });
+
   it('survives a crash after the commit and before the ack (redelivery is a replay)', async () => {
     const wallet = await openWallet();
     const message = envelope(wallet);

@@ -183,7 +183,8 @@ export class WagerMessageConsumer implements OnApplicationBootstrap, BeforeAppli
               channel: 'sqs',
               consumerName: WAGER_CONSUMER_NAME,
               messageId: envelope.messageId,
-              messageHash: sha256(canonicalJson(envelope)),
+              // Only the business data identifies the message; occurredAt is transport metadata.
+              messageHash: sha256(canonicalJson(envelope.data)),
             },
           });
         } catch (error) {

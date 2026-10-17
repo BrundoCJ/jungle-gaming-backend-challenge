@@ -173,7 +173,17 @@ export class ProcessWagerTransactionUseCase {
     if (source.channel !== 'sqs') {
       return;
     }
-    if (await repos.inbox.find(source.consumerName, source.messageId)) {
+    // Checked again here, inside the transaction: a concurrent delivery of the same
+    // messageId may have committed after the first check. A concurrent insert of
+    // the same key fails on the primary key and the unit of work retries.
+    const seen = await repos.inbox.find(source.consumerName, source.messageId);
+    if (seen) {
+      if (!seen.matchesPayload(source.messageHash)) {
+        throw new PoisonMessageError(
+          'MESSAGE_ID_REUSED',
+          'messageId redelivered with a different body',
+        );
+      }
       return;
     }
     const inbox = InboxMessage.receive({
